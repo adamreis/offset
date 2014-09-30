@@ -83,8 +83,8 @@ Pair[] directionsForPair(Pair pr) {
 	Pair[] directions = new Pair[4];
 	directions[0] = new Pair(pr); 
 	directions[1] = new Pair(pr.x, -pr.y);
-	directions[2] = new Pair(-pr.x, pr.y);
-	directions[3] = new Pair(-pr.x, -pr.y);
+	directions[2] = new Pair(pr.y, pr.x);
+	directions[3] = new Pair(pr.y, -pr.x);
 	return directions;
 }
 
