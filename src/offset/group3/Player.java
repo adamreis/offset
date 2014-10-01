@@ -1,4 +1,4 @@
-package offset.ourGroup;
+package offset.group3;
 
 import java.util.*;
 
