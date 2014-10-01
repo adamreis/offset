@@ -27,8 +27,8 @@ public class Player extends offset.sim.Player {
 				for (int i_pr=0; i_pr<size; i_pr++) {
 				for (int j_pr=0; j_pr <size; j_pr++) {
 					movepr.move = false;
-					movepr.x = grid[i*size+j];
-					movepr.y = grid[size*i_pr+j_pr];
+					movepr.src = grid[i*size+j];
+					movepr.target = grid[size*i_pr+j_pr];
 					if (validateMove(movepr, pr)) {
 						movepr.move = true;
 						return movepr;
@@ -76,13 +76,13 @@ public class Player extends offset.sim.Player {
 
 boolean validateMove(movePair movepr, Pair pr) {
     	
-    	Point src = movepr.x;
-    	Point target = movepr.y;
+    	Point src = movepr.src;
+    	Point target = movepr.target;
     	boolean rightposition = false;
-    	if (Math.abs(target.x-src.x)==Math.abs(pr.x) && Math.abs(target.y-src.y)==Math.abs(pr.y)) {
+    	if (Math.abs(target.x-src.x)==Math.abs(pr.p) && Math.abs(target.y-src.y)==Math.abs(pr.q)) {
     		rightposition = true;
     	}
-    	if (Math.abs(target.x-src.x)==Math.abs(pr.y) && Math.abs(target.y-src.y)==Math.abs(pr.x)) {
+    	if (Math.abs(target.x-src.x)==Math.abs(pr.p) && Math.abs(target.y-src.y)==Math.abs(pr.q)) {
     		rightposition = true;
     	}
         if (rightposition && src.value == target.value && src.value >0) {

@@ -50,6 +50,7 @@ public class Offset
     
     static Pair p0;
     static Pair p1;
+    static int usedP = 0;
     //static FileOutputStream out;
     static PrintWriter writer;
     static ArrayList<ArrayList> history = new ArrayList<ArrayList>();
@@ -138,16 +139,28 @@ public class Offset
 
     // generate a random Pair given a integer d
     static Pair randomPair(int d) {
-        Pair pr = new Pair();
-        // generate [0-50)
-        
-        pr.x = random.nextInt(d);
-        pr.y = d-pr.x;
-        while (pr.x == pr.y || pr.x==0 || pr.y==0) {
-        	pr.x = random.nextInt(d);
-            pr.y = d-pr.x;
+      if(d < 5){
+        System.out.println("d is too small to hold two pairs");
+        System.exit(0);
+      }
+      Pair pr = new Pair();
+      // while loop is naughty :|
+      // if usedP is set to positive number, excluding that number in pair,
+      // otherwise creat new pair, in ascending order
+      System.out.println(usedP);
+      if(usedP == 0){ // case: first pair
+        // make sure even number dont generate p = q 
+        pr.p = d % 2 == 0? random.nextInt(d/2 - 1) + 1 : random.nextInt(d / 2) + 1;
+        usedP = pr.p;
+        pr.q = d - pr.p;
+      } else { // case: second pair, random with one less number
+        pr.p = d % 2 == 0? random.nextInt(d/2 - 2) + 1 : random.nextInt(d / 2 - 1) + 1;
+        if(pr.p >= usedP){
+          pr.p++;
         }
-        return pr;
+        pr.q = d - pr.p;
+      } 
+      return pr;
     }
 
     
@@ -181,7 +194,7 @@ public class Offset
         public void init() {}
 
         private boolean performOnce() {
-        	label2.setText("Pair for player 0 is ( "+p0.x+", "+p0.y+") "+"Pair for player 1 is ( "+p1.x+", "+p1.y+")");
+        	label2.setText("Pair for player 0 is ( "+p0.p+", "+p0.q+") "+"Pair for player 1 is ( "+p1.p+", "+p1.q+")");
             label2.setVisible(true);
         	if (tick > MAX_TICKS) {
                 label.setText("Time out!!!");
@@ -316,6 +329,7 @@ public class Offset
             for (int i=0; i<size; i++) {
             	
             for (int j=0; j<size; j++) {
+            	g2.setPaint(new Color(160,160,160));
             	g2.draw(new Rectangle2D.Double(ox+x_in*i,oy+y_in*j,x_in,y_in));
             }
             
@@ -332,29 +346,39 @@ public class Offset
             String strI = sb.toString();
             double x_in = (dimension*s-ox)/size;
             double y_in = (dimension*s-oy)/size;
+            
+            double saturation = 0;
+            if (p.value > 0)
+            	saturation = Math.min(((Math.log((double) p.value) / Math.log(2.0)))/8, 1);
+
         	if (p.owner == -1) {
-                g2.setPaint(Color.GREEN);
-        	}
-            else if (p.owner == 0) {
-                g2.setPaint(Color.magenta);
+                g2.setPaint(new Color(255,255,255));
+         	} else if (p.owner == 0) {
+                //g2.setPaint(new Color(255 - brightness*32, 255, 255));
+                g2.setPaint(new Color(Color.HSBtoRGB((float) 0.6, (float) saturation, (float) 1.0)));
+         		g2.fillRect((int)(ox+p.x*x_in), (int)(oy+p.y*y_in), (int)(x_in), (int)(y_in));
+
             }
             else {
-                g2.setPaint(Color.BLUE);
+                g2.setPaint(new Color(Color.HSBtoRGB((float) 0.4, (float) saturation, (float) 0.85)));
+         		g2.fillRect((int)(ox+p.x*x_in), (int)(oy+p.y*y_in), (int)(x_in), (int)(y_in));
+
             }
-        	if (p.change) {
-        		//System.out.println("haha, we should change background color now");
-        		g2.fillRect((int)(ox+p.x*x_in), (int)(oy+p.y*y_in), (int)(x_in), (int)(y_in));
-        		g2.setPaint(Color.WHITE);
+       		 
+        	if (p.value <= 1)
+        		g2.setPaint(new Color(196,196,196));
+        	else
+        		g2.setPaint(Color.BLACK);
+        	
+        	if (p.value > 0)
+        		g2.drawString(strI, (int)(11+p.x*x_in), (int)(p.y*y_in+25));
+            
+            if (p.change) {
+            	g2.setPaint(new Color(255,96,96));
+            	g2.draw(new Rectangle2D.Double((int)(ox+p.x*x_in), (int)(oy+p.y*y_in), (int)(x_in), (int)(y_in)));
         		p.change = false;
         	}
-            
-         //   Ellipse2D e = new Ellipse2D.Double(p.x*s-PSIZE/2+ox, p.y*s-PSIZE/2+oy, PSIZE, PSIZE);
-          //  g2.setStroke(stroke);
-            //g2.draw(e);9
-            g2.drawString(strI, (int)(11+p.x*x_in), (int)(p.y*y_in+25));
         }
-
-       
     }
     
 
@@ -362,8 +386,8 @@ public class Offset
     // update the current point according to the offsets
     void update(movePair movepr, int playerID) {
     	if (movepr.move) {
-    	Point src = movepr.x;
-    	Point target = movepr.y;
+    	Point src = movepr.src;
+    	Point target = movepr.target;
         target.value = target.value+src.value;
         src.value = 0;
         target.owner = playerID;
@@ -386,13 +410,13 @@ public class Offset
  
     boolean validateMove(movePair movepr, Pair pr) {
     	
-    	Point src = movepr.x;
-    	Point target = movepr.y;
+    	Point src = movepr.src;
+    	Point target = movepr.target;
     	boolean rightposition = false;
-    	if (Math.abs(target.x-src.x)==Math.abs(pr.x) && Math.abs(target.y-src.y)==Math.abs(pr.y)) {
+    	if (Math.abs(target.x-src.x)==Math.abs(pr.p) && Math.abs(target.y-src.y)==Math.abs(pr.q)) {
     		rightposition = true;
     	}
-    	if (Math.abs(target.x-src.x)==Math.abs(pr.y) && Math.abs(target.y-src.y)==Math.abs(pr.x)) {
+    	if (Math.abs(target.x-src.x)==Math.abs(pr.q) && Math.abs(target.y-src.y)==Math.abs(pr.p)) {
     		rightposition = true;
     	}
         if (rightposition  && src.value == target.value && src.value>0) {
@@ -446,7 +470,7 @@ public class Offset
         //System.out.println(next.move);
         if (next.move) {
         if (validateMove(next, currentPr)) {
-        	writer.printf("(%d, %b, (%d, %d), (%d, %d), %d)\n", currentplayer, next.move, next.x.x, next.x.y, next.y.x, next.y.y, next.x.value*2);
+        	writer.printf("(%d, %b, (%d, %d), (%d, %d), %d)\n", currentplayer, next.move, next.src.x, next.src.y, next.target.x, next.target.y, next.src.value*2);
         	writer.flush();
         	ArrayList record = new ArrayList();
         	record.add(currentplayer);
@@ -499,8 +523,8 @@ public class Offset
     }
    
    void pairPrint(movePair movepr) {
-	   System.out.printf("src is (%d, %d) = %d", movepr.x.x, movepr.x.y, movepr.x.value);
-	   System.out.printf("target is (%d, %d) = %d \n", movepr.y.x, movepr.y.y, movepr.y.value);
+	   System.out.printf("src is (%d, %d) = %d", movepr.src.x, movepr.src.y, movepr.src.value);
+	   System.out.printf("target is (%d, %d) = %d \n", movepr.target.x, movepr.target.y, movepr.target.value);
 	   
    }
    boolean nomove(Pair pr) {
@@ -544,11 +568,11 @@ public class Offset
         game.init();
         p0=randomPair(d);
         p1=randomPair(d);
-        while (p0.x==p1.x || p0.y == p1.x) {
+        while (p0.p==p1.p || p0.q == p1.p) {
         	p1=randomPair(d);
         }
-        System.out.printf("Pair 1 is (%d, %d)", p0.x, p0.y);
-        System.out.printf("Pair 2 is (%d, %d)", p1.x, p1.y);
+        System.out.printf("Pair 1 is (%d, %d)", p0.p, p0.q);
+        System.out.printf("Pair 2 is (%d, %d)", p1.p, p1.q);
         player0 = loadPlayer(group0, p0, 0);
         player1 = loadPlayer(group1, p1, 1);
         // init game

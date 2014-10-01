@@ -5,14 +5,14 @@ import offset.sim.movePair;
 public class movePair {
 
 	public boolean move;
-    public Point x;
-    public Point y;
+    public Point src;
+    public Point target;
 
     public movePair() {  }
 
     public movePair(boolean flag, Point xx, Point yy) {
         move = flag;
-        x = xx;
-        y = yy;
+        src = xx;
+        target = yy;
     }
 }
