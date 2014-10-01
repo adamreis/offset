@@ -3,22 +3,22 @@ package offset.sim;
 import offset.sim.Pair;
 
 public class Pair {
-    public int x;
-    public int y;
+    public int p;
+    public int q;
 
-    public Pair() { x = 0; y = 0; }
+    public Pair() { p = 0; q = 0; }
 
-    public Pair(int xx, int yy) {
-        x = xx;
-        y = yy;
+    public Pair(int pp, int qq) {
+        p = pp;
+        q = qq;
     }
 
     public Pair(Pair o) {
-        this.x = o.x;
-        this.y = o.y;
+        this.p = o.p;
+        this.q = o.q;
     }
 
     public boolean equals(Pair o) {
-        return o.x == x && o.y == y;
+        return o.p == p && o.q == q;
     }
 }

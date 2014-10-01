@@ -22,67 +22,69 @@ public class Player extends offset.sim.Player {
 	public movePair move(Point[] grid, Pair pr, Pair pr0, ArrayList<ArrayList> history) {
 		//System.out.println(history.size());
 		movePair movepr = new movePair();
-		for (int i = 0; i < size; i++) {
-			for (int j = 0; j < size; j++) {
-				for (int i_pr=0; i_pr<size; i_pr++) {
-				for (int j_pr=0; j_pr <size; j_pr++) {
-					movepr.move = false;
-					movepr.x = grid[i*size+j];
-					movepr.y = grid[size*i_pr+j_pr];
-					if (validateMove(movepr, pr)) {
-						movepr.move = true;
-						return movepr;
-					}
-				}
-				}
-			/*	if (i + pr.x >= 0 && i + pr.x < size) {
-					if (j + pr.y >= 0 && j + pr.y < size) {
-						
-					}
-					if (j - pr.y >= 0 && j - pr.y < size) {
-
-					}
-				}
-				if (i - pr.x >= 0 && i - pr.x < size) {
-					if (j + pr.y >= 0 && j + pr.y < size) {
-
-					}
-					if (j - pr.y >= 0 && j - pr.y < size) {
-
-					}
-				}
-				if (i + pr.y >= 0 && i + pr.y < size) {
-					if (j + pr.x >= 0 && j + pr.x < size) {
-
-					}
-					if (j - pr.x >= 0 && j - pr.x < size) {
-
-					}
-				}
-				if (i - pr.y >= 0 && i - pr.y < size) {
-					if (j + pr.x >= 0 && j + pr.x < size) {
-
-					}
-					if (j - pr.x >= 0 && j - pr.x < size) {
-
-					}
-				}
-*/
-			}
+			
+		ArrayList<movePair> possible = possibleMoves(grid, pr);
+		if (possible.size() > 0) {
+			Random rand = new Random();
+			int randomIndex = rand.nextInt(possible.size());
+			movepr = possible.get(randomIndex);	
 		}
 		return movepr;
 	}
 
+	ArrayList<movePair> possibleMoves(Point[] grid, Pair pr) {
+		ArrayList<movePair> possible = new ArrayList<movePair>();
+		for (int i = 0; i < size; i++) {
+			for (int j = 0; j < size; j++) {
+				Point currentPoint = pointAtGridIndex(grid, i, j);
+				if (currentPoint.value == 0) {
+					continue;
+				}
+				for (Pair d : directionsForPair(pr)) {
+					if (isValidBoardIndex(i + d.p, j + d.q)){
+						Point possiblePairing = pointAtGridIndex(grid, i + d.p, j + d.q);
+						if (currentPoint.value == possiblePairing.value) {
+							possible.add(new movePair(true, currentPoint, possiblePairing));
+							possible.add(new movePair(true, possiblePairing, currentPoint));
+						}
+					}
+					
+				}
+			}
+		}
+		
+		return possible;
+	}
 
+	Pair[] directionsForPair(Pair pr) {
+		Pair[] directions = new Pair[4];
+		directions[0] = new Pair(pr); 
+		directions[1] = new Pair(pr.p, -pr.q);
+		directions[2] = new Pair(pr.q, pr.p);
+		directions[3] = new Pair(pr.q, -pr.p);
+		return directions;
+	}	
+	
+	boolean isValidBoardIndex(int i, int j) {
+		if (i < 0 || i >= size || j < 0 || j >= size) {
+			return false;
+		}
+		return true;
+	}
+	
+	Point pointAtGridIndex(Point[] grid, int i, int j) {
+		return grid[i*size + j];
+	}
+	
 boolean validateMove(movePair movepr, Pair pr) {
     	
-    	Point src = movepr.x;
-    	Point target = movepr.y;
+    	Point src = movepr.src;
+    	Point target = movepr.target;
     	boolean rightposition = false;
-    	if (Math.abs(target.x-src.x)==Math.abs(pr.x) && Math.abs(target.y-src.y)==Math.abs(pr.y)) {
+    	if (Math.abs(target.x-src.x)==Math.abs(pr.p) && Math.abs(target.y-src.y)==Math.abs(pr.q)) {
     		rightposition = true;
     	}
-    	if (Math.abs(target.x-src.x)==Math.abs(pr.y) && Math.abs(target.y-src.y)==Math.abs(pr.x)) {
+    	if (Math.abs(target.x-src.x)==Math.abs(pr.p) && Math.abs(target.y-src.y)==Math.abs(pr.q)) {
     		rightposition = true;
     	}
         if (rightposition && src.value == target.value && src.value >0) {
