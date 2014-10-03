@@ -31,30 +31,30 @@ public class Player extends offset.sim.Player {
 		}
 		this.grid = grid;
 		
-
-		// Everything else here is recycled from dumbPlayer
-//		movePair movepr = new movePair();
-//		for (int i = 0; i < size; i++) {
-//			for (int j = 0; j < size; j++) {
-//				for (int i_pr=0; i_pr<size; i_pr++) {
-//				for (int j_pr=0; j_pr <size; j_pr++) {
-//					movepr.move = false;
-//					movepr.src = grid[i*size+j];
-//					movepr.target = grid[i_pr*size+j_pr];
-//					if (validateMove(movepr, pr)) {
-//						movepr.move = true;
-//						return movepr;
-//					}
-//				}
-//				}
-//
-//			}
-//		}
-//		return movepr;
+/*
+		Everything else here is recycled from dumbPlayer
+		movePair movepr = new movePair();
+		for (int i = 0; i < size; i++) {
+			for (int j = 0; j < size; j++) {
+				for (int i_pr=0; i_pr<size; i_pr++) {
+				for (int j_pr=0; j_pr <size; j_pr++) {
+					movepr.move = false;
+					movepr.src = grid[i*size+j];
+					movepr.target = grid[i_pr*size+j_pr];
+					if (validateMove(movepr, pr)) {
+						movepr.move = true;
+						return movepr;
+					}
+				}
+				}
+			}
+		}
+		return movepr;
+ */
 		return oneLevelMove(grid, pr, pr0);
 	}
 
-movePair oneLevelMove(Point [] grid, Pair pr, Pair pr0) {
+movePair oneLevelMove(Point [] grid, Pair pr, Pair pr0) { //pr is player's moves, pr0 is opponent's
 	movePair nextMove = new movePair();
 	nextMove.move = false;
 	
@@ -62,17 +62,43 @@ movePair oneLevelMove(Point [] grid, Pair pr, Pair pr0) {
 	
 	for (movePair mp : possibleMoves(grid, pr)) {
 		Point[] newGrid = applyMoveToGrid(grid, mp, this.id);
-		ArrayList<movePair> possibleOpponentMoves = possibleMoves(newGrid, pr0);
-		if (possibleOpponentMoves.size() < fewestCompetitorMoves) {
-			fewestCompetitorMoves = possibleOpponentMoves.size();
+		//ArrayList<movePair> possibleOpponentMoves = possibleMoves(newGrid, pr0);
+		int possibleOpponentMovesNum = possibleMovesNum(newGrid, pr0);
+		
+		if (possibleOpponentMovesNum < fewestCompetitorMoves) {
+			fewestCompetitorMoves = possibleOpponentMovesNum;
 			nextMove = mp;
 			nextMove.move = true;
 		} 
 	}
 	System.out.println("fewestCompetitorMoves: " + fewestCompetitorMoves);
-	return nextMove;
+	return nextMove; // returns the move where the competitor has the fewest possible moves
 }
+
+// returns the number of possible moves
+int possibleMovesNum(Point[] grid, Pair pr) {
+	int possible = 0;
+	for (int i = 0; i < size; i++) {
+		for (int j = 0; j < size; j++) {
+			Point currentPoint = pointAtGridIndex(grid, i, j);
+			if (currentPoint.value == 0) {
+				continue;
+			}
+			for (Pair d : directionsForPair(pr)) {
+				if (isValidBoardIndex(i + d.p, j + d.q)){
+					Point possiblePairing = pointAtGridIndex(grid, i + d.p, j + d.q);
+					if (currentPoint.value == possiblePairing.value) {
+						possible = possible + 2; //if you pile on them and if they pile on you
+					}
+				}
+				
+			}
+		}
+	}
 	
+	return possible;
+}
+
 ArrayList<movePair> possibleMoves(Point[] grid, Pair pr) {
 	ArrayList<movePair> possible = new ArrayList<movePair>();
 	for (int i = 0; i < size; i++) {
@@ -85,8 +111,8 @@ ArrayList<movePair> possibleMoves(Point[] grid, Pair pr) {
 				if (isValidBoardIndex(i + d.p, j + d.q)){
 					Point possiblePairing = pointAtGridIndex(grid, i + d.p, j + d.q);
 					if (currentPoint.value == possiblePairing.value) {
-						possible.add(new movePair(true, currentPoint, possiblePairing));
-						possible.add(new movePair(true, possiblePairing, currentPoint));
+						possible.add(new movePair(true, currentPoint, possiblePairing)); //if you pile on them
+						possible.add(new movePair(true, possiblePairing, currentPoint)); //if they pile on you
 					}
 				}
 				
