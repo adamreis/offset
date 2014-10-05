@@ -66,9 +66,9 @@ public class Player extends offset.sim.Player {
 			// Create new grid with one of the possible moves
 			Point[] newGrid = applyMoveToGrid(grid, mp, this.id);
 			// Create ArrayList with all possible opponent moves in new grid 
-			ArrayList<movePair> possibleOpponentMoves = possibleMoves(newGrid, pr0);
+			int possibleOpponentMovesNum = possibleMovesNum(newGrid, pr0);
 			
-			if (possibleOpponentMoves.size() < fewestCompetitorMoves) {
+			if (possibleOpponentMovesNum < fewestCompetitorMoves) {
 				highestAttainableScore = mp.src.value * 2;
 				highestAttainableScoreMove = mp;
 				
@@ -79,8 +79,8 @@ public class Player extends offset.sim.Player {
 					highestAttainableScoreUnstealableMove = mp;
 				}
 				
-				fewestCompetitorMoves = possibleOpponentMoves.size();
-			} else if (possibleOpponentMoves.size() == fewestCompetitorMoves) {
+				fewestCompetitorMoves = possibleOpponentMovesNum;
+			} else if (possibleOpponentMovesNum == fewestCompetitorMoves) {
 				if (mp.src.value * 2 > highestAttainableScore) {
 					highestAttainableScore = mp.src.value * 2;
 					highestAttainableScoreMove = mp;
@@ -145,6 +145,28 @@ public class Player extends offset.sim.Player {
 		return possible;
 	}
 
+	int possibleMovesNum(Point[] grid, Pair pr) {
+		int possible = 0;
+		for (int i = 0; i < size; i++) {
+			for (int j = 0; j < size; j++) {
+				Point currentPoint = pointAtGridIndex(grid, i, j);
+				if (currentPoint.value == 0) {
+					continue;
+				}
+				for (Pair d : directionsForPair(pr)) {
+					if (isValidBoardIndex(i + d.p, j + d.q)){
+						Point possiblePairing = pointAtGridIndex(grid, i + d.p, j + d.q);
+						if (currentPoint.value == possiblePairing.value) {
+							possible = possible + 2;
+						}
+					}
+
+				}
+			}
+		}
+
+		return possible;
+	}
 	Point[] applyMoveToGrid(Point[] grid, movePair move, int newOwner) {
 		Point[] newGrid = new Point[grid.length];
 		for (int i = 0; i < grid.length; i++) {
