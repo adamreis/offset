@@ -68,13 +68,20 @@ public class Player extends offset.sim.Player {
 	}
 
 	movePair oneLevelMove(Point [] grid, Pair pr, Pair pr0) {
-		int fewestCompetitorMoves = Integer.MAX_VALUE;
+		int fewestCompetitorMovesNum = Integer.MAX_VALUE;
+		movePair fewestCompetitorMovesMove = new movePair();
 
-		int lowestAttainableScore = Integer.MAX_VALUE;
-		movePair lowestAttainableScoreMove = new movePair();
+		int highestPlayerMovesNum = -1;
+		movePair highestPlayerMovesNumMove = new movePair();
+		
+
 		int highestAttainableScoreUnstealable = -1;
 		movePair highestAttainableScoreUnstealableMove = new movePair();
+		
+		int lowestAttainableScore = Integer.MAX_VALUE;
+		movePair lowestAttainableScoreMove = new movePair();
 
+		
 		for (movePair mp : possibleMoves(grid, pr)) {
 			// Create new grid with one of the possible moves
 			Point[] newGrid = applyMoveToGrid(grid, mp, this.id);
@@ -84,31 +91,38 @@ public class Player extends offset.sim.Player {
 			boolean opponentCanStealSpot = opponentCanStealSpot(newGrid, mp.target, pr0);
 			int pointsObtainedForMove = pointsObtainedForMove(mp);
 			
-			if (possibleOpponentMovesNum < fewestCompetitorMoves) {
-				lowestAttainableScore = pointsObtainedForMove;
-				lowestAttainableScoreMove = mp;
+			if (possibleOpponentMovesNum < fewestCompetitorMovesNum) {
+				// resetting values for later if statement
+				highestPlayerMovesNum = -1;
+				highestAttainableScoreUnstealable = -1;
+				lowestAttainableScore = Integer.MAX_VALUE;
 				
-				if (opponentCanStealSpot) {
+				fewestCompetitorMovesNum = possibleOpponentMovesNum;
+				fewestCompetitorMovesMove = mp;
+			} else if (possibleOpponentMovesNum == fewestCompetitorMovesNum) {
+				int possiblePlayerMovesNum = possibleMovesNum(newGrid, pr);
+				if(possiblePlayerMovesNum > highestPlayerMovesNum){
 					highestAttainableScoreUnstealable = -1;
-				} else {
-					highestAttainableScoreUnstealable = pointsObtainedForMove;
-					highestAttainableScoreUnstealableMove = mp;
+					lowestAttainableScore = Integer.MAX_VALUE;
+					
+					highestPlayerMovesNum = possiblePlayerMovesNum;
+					highestPlayerMovesNumMove = mp;
 				}
-				
-				fewestCompetitorMoves = possibleOpponentMovesNum;
-			} else if (possibleOpponentMovesNum == fewestCompetitorMoves) {
-				if (opponentCanStealSpot && 
-						pointsObtainedForMove < lowestAttainableScore) {
-					lowestAttainableScore = pointsObtainedForMove;
-					lowestAttainableScoreMove = mp;
+				else if(possiblePlayerMovesNum == highestPlayerMovesNum){
+					if (!opponentCanStealSpot && // if the opponent cannot steal the spot
+							pointsObtainedForMove > highestAttainableScoreUnstealable) { // highest score unstealable
+						lowestAttainableScore = Integer.MAX_VALUE;
+						
+						highestAttainableScoreUnstealable = pointsObtainedForMove;
+						highestAttainableScoreUnstealableMove = mp;
+						
+					}
+					if (opponentCanStealSpot && 
+							pointsObtainedForMove < lowestAttainableScore) {
+						lowestAttainableScore = pointsObtainedForMove;
+						lowestAttainableScoreMove = mp;
+					}
 				}
-				
-				if (!opponentCanStealSpot && // if the opponent cannot steal the spot
-						pointsObtainedForMove > highestAttainableScoreUnstealable) { // highest score unstealable
-					highestAttainableScoreUnstealable = pointsObtainedForMove;
-					highestAttainableScoreUnstealableMove = mp;
-				}
-				
 			}
 		}
 		
@@ -116,15 +130,24 @@ public class Player extends offset.sim.Player {
 		nextMove.move = false;
 		
 		System.out.println("highestattainable = " + highestAttainableScoreUnstealable +",lowestattainable=" + lowestAttainableScore);
-		if (highestAttainableScoreUnstealable > -1) {
-			nextMove = highestAttainableScoreUnstealableMove;
-			nextMove.move = true;
-			System.out.println("Going with highest attainable unstealable");
-		} else if (lowestAttainableScore < Integer.MAX_VALUE) {
+		if (lowestAttainableScore < Integer.MAX_VALUE) {
 			nextMove = lowestAttainableScoreMove;
 			nextMove.move = true;
-			System.out.println("Going with lowest attainable stealable");
+			//System.out.println("Going with lowest attainable stealable");
+		} else if (highestAttainableScoreUnstealable > -1) {
+			nextMove = highestAttainableScoreUnstealableMove;
+			nextMove.move = true;
+			//System.out.println("Going with highest attainable unstealable");
+		} else if (highestPlayerMovesNum > -1) {
+			nextMove = highestPlayerMovesNumMove;
+			nextMove.move = true;
+			//System.out.println("Going with highest num moves move for player.");
+		} else if(fewestCompetitorMovesNum < Integer.MAX_VALUE){
+			nextMove = fewestCompetitorMovesMove;
+			nextMove.move = true;
+			//System.out.println("Going with lowest num moves for opponent.");
 		}
+
 		
 		//System.out.println("fewestCompetitorMoves: " + fewestCompetitorMoves);
 		return nextMove;
@@ -137,7 +160,7 @@ public class Player extends offset.sim.Player {
 			pointsObtained += mp.src.value;
 		}
 		
-		if (mp.target.owner == theirId || mp.src.owner == -1) {
+		if (mp.target.owner == theirId || mp.target.owner == -1) {
 			pointsObtained += mp.target.value;
 		}
 		
